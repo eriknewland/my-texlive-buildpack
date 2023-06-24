@@ -1,0 +1,28 @@
+#!/bin/bash
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+
+TEXLIVE_DIR="$CACHE_DIR/texlive"
+
+# Install TexLive if not cached
+if [ ! -d "$TEXLIVE_DIR" ]; then
+  echo "-----> Installing TexLive"
+  mkdir -p $TEXLIVE_DIR
+  curl -sL https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz | tar -xz -C $CACHE_DIR
+  TEXLIVE_INSTALLER=$(find $CACHE_DIR -name "install-tl" -type d)
+  echo "I $TEXLIVE_DIR" > $TEXLIVE_INSTALLER/texlive.profile
+  $TEXLIVE_INSTALLER/install-tl -profile $TEXLIVE_INSTALLER/texlive.profile
+fi
+
+# Add TexLive binaries to the PATH
+export PATH="$TEXLIVE_DIR/bin/x86_64-linux:$PATH"
+
+# Install required packages
+echo "-----> Installing required TexLive packages"
+tlmgr install keycommand xstring hyperref helvet fontenc
+
+# Set the PATH for the app
+PROFILE_PATH="$BUILD_DIR/.profile.d/texlive.sh"
+mkdir -p $(dirname $PROFILE_PATH)
+echo 'export PATH="$HOME/.cache/texlive/bin/x86_64-linux:$PATH"' > $PROFILE_PATH
